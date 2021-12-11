@@ -25,3 +25,7 @@ void update_positions(Object objs[], const size_t numobj, const Condition cond);
 // To do: 以下に上記と同じ引数で実行される my_* を作成
 // 実装できたらmain関数で上記と入れ替えていく
 // my_plot_objects(), my_update_velocities(), my_update_positions() の3つ 
+
+void my_plot_objects(Object objs[], const size_t numobj, const double t, const Condition cond);
+void my_update_velocities(Object objs[], const size_t numobj, const Condition cond);
+void my_update_positions(Object objs[], const size_t numobj, const Condition cond);
