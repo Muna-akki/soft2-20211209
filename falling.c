@@ -41,16 +41,16 @@ int main(int argc, char **argv){
 // 実習: 以下に my_ で始まる関数を実装する
 // 最終的には physics.h 内の、こちらが用意したプロトタイプをコメントアウト
 void my_plot_objects(Object objs[], const size_t numobj, const double t, const Condition cond){
-	int y = 0;
-	int x = 0;
+	double y = 0;
+	double x = 0;
 	int check = 0;
 	for(int i=0 ; i<cond.height ; i++){ //i行目
 		for(int j=0 ; j<cond.width ; j++){ //j列
 			check = 0; //そのマスに既に何らかのobjectが描画されているかどうか
 			for(int k=0 ; k<numobj ; k++){ //objectが存在するかどうか
-				y = objs[k].y + cond.height/2;
-				x = cond.width/2;
-				if(y==i && x==j &&  check==0){
+				y = objs[k].y + cond.height/2.0;
+				x = cond.width/2.0;
+				if((int)y==i && (int)x==j &&  check==0){
 					printf("o");
 					check = 1;
 				}
@@ -79,6 +79,9 @@ void my_update_velocities(Object objs[], const size_t numobj, const Condition co
 			double ady = fabs(dy);
 			a += cond.G * objs[j].m / (ady*ady*ady) * dy;
 		}
+		if(objs[i].m==0){
+            a = 0;
+        }
 		v = objs[i].vy + a*cond.dt;
 		objs[i].prev_vy = objs[i].vy;
 		objs[i].vy = v;

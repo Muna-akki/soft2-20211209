@@ -37,3 +37,4 @@ void my_plot_objects(Object objs[], const size_t numobj, const double t, const C
 void my_update_velocities(Object objs[], const size_t numobj, const Condition cond);
 void my_update_positions(Object objs[], const size_t numobj, const Condition cond);
 void my_bounce(Object objs[], const size_t numobj, const Condition cond);
+void read_file(FILE* fp, Object objs[], const size_t numobj, const Condition cond);

@@ -13,15 +13,28 @@ int main(int argc, char **argv){
      	.dt = 1.0,
      	.cor = 0.8
     };
-  
-  	size_t objnum = 4;
-  	Object objects[objnum];
 
+    if(argc>3){
+        fprintf(stderr, "不正な引数\n");
+        return EXIT_FAILURE;
+    }
+  	size_t objnum = strtol(argv[1],NULL,10);
+  	Object objects[objnum];
+    FILE* fp = fopen(argv[2], "r");
+    if(fp==NULL){
+        printf("cannot open file\n");
+        return EXIT_FAILURE;
+    }
+    read_file(fp, objects, objnum, cond);
+
+    /*
   	// objects[1] は巨大な物体を画面外に... 地球のようなものを想定
   	objects[0] = (Object){ .m = 60.0, .y = -19.9, .x=-35, .vy = 2.0, .vx = 1.5};
   	objects[1] = (Object){ .m = 100000.0, .y =  1000.0, .vy = 0.0, .vx = 0.0};
     objects[2] = (Object){ .m = 100, .y = 15, .x = 20, .vy = -5.0, .vx = -1.0};
     objects[3] = (Object){ .m = 15.0, .y = 5, .x = 0, .vy = 0.5, .vx = 0.2};
+    */
+
 	// シミュレーション. ループは整数で回しつつ、実数時間も更新する
   	const double stop_time = 400;
   	double t = 0;
@@ -37,6 +50,7 @@ int main(int argc, char **argv){
     	usleep(200 * 1000); // 200 x 1000us = 200 ms ずつ停止
     	printf("\e[%dA", cond.height+3+(int)objnum);// 壁とパラメータ表示分で3行
   	}
+    fclose(fp);
   	return EXIT_SUCCESS;
 }
 
@@ -44,8 +58,8 @@ int main(int argc, char **argv){
 // 最終的に phisics2.h 内の事前に用意された関数プロトタイプをコメントアウト
 
 void my_plot_objects(Object objs[], const size_t numobj, const double t, const Condition cond){
-	int y = 0;
-	int x = 0;
+	double y = 0;
+	double x = 0;
 	int check = 0;
 
 	printf("+");
@@ -59,9 +73,9 @@ void my_plot_objects(Object objs[], const size_t numobj, const double t, const C
 		for(int j=0 ; j<cond.width ; j++){ //j列
 			check = 0; //そのマスに既に何らかのobjectが描画されているかどうか
 			for(int k=0 ; k<numobj ; k++){ //objectが存在するかどうか
-				y = objs[k].y + cond.height/2;
-				x = objs[k].x + cond.width/2;
-				if(y==i && x==j &&  check==0){
+				y = objs[k].y + cond.height/2.0;
+				x = objs[k].x + cond.width/2.0;
+				if((int)y==i && (int)x==j &&  check==0){
 					printf("o");
 					check = 1;
 				}
@@ -100,6 +114,10 @@ void my_update_velocities(Object objs[], const size_t numobj, const Condition co
 			ax += cond.G * objs[j].m / (dr*dr*dr) * dx;
             ay += cond.G * objs[j].m / (dr*dr*dr) * dy;
 		}
+        if(objs[i].m==0){
+            ax = 0;
+            ay = 0;
+        }
         vx = objs[i].vx + ax*cond.dt;
 		vy = objs[i].vy + ay*cond.dt;
         objs[i].prev_vx = objs[i].vx;
@@ -120,23 +138,83 @@ void my_update_positions(Object objs[], const size_t numobj, const Condition con
 
 void my_bounce(Object objs[], const size_t numobj, const Condition cond){
 	for(int i=0 ; i<numobj ; i++){ //i番目のobjectについて
-		if(objs[i].prev_x<cond.width/2 && objs[i].x>=cond.width/2){
+		if(objs[i].prev_x<cond.width/2.0 && objs[i].x>cond.width/2.0){
             objs[i].x = cond.width-objs[i].x;
 			objs[i].prev_vx = -cond.cor*objs[i].vx;
 			objs[i].vx = -cond.cor*objs[i].vx;
-        }else if(objs[i].prev_x>-cond.width/2 && objs[i].x<=-cond.width/2){
+        
+		}else if(objs[i].prev_x>-cond.width/2.0 && objs[i].x<=-cond.width/2.0){
             objs[i].x = -cond.width-objs[i].x;
 			objs[i].prev_vx = -cond.cor*objs[i].vx;
 			objs[i].vx = -cond.cor*objs[i].vx;
-        }
-        if(objs[i].prev_y<cond.height/2 && objs[i].y>=cond.height/2){
+        
+		}else if(objs[i].prev_x>cond.width/2.0 && objs[i].x<cond.width/2.0){
+			objs[i].x = cond.width-objs[i].x;
+			objs[i].prev_vx = -cond.cor*objs[i].vx;
+			objs[i].vx = -cond.cor*objs[i].vx;
+
+		}else if(objs[i].prev_x<-cond.width/2.0 && objs[i].x>-cond.width/2.0){
+			objs[i].x = -cond.width-objs[i].x;
+			objs[i].prev_vx = -cond.cor*objs[i].vx;
+			objs[i].vx = -cond.cor*objs[i].vx;
+		}
+        
+
+		if(objs[i].prev_y<cond.height/2.0 && objs[i].y>cond.height/2.0){
 			objs[i].y = cond.height-objs[i].y;
 			objs[i].prev_vy = -cond.cor*objs[i].vy;
 			objs[i].vy = -cond.cor*objs[i].vy;
-		}else if(objs[i].prev_y>-cond.height/2 && objs[i].y<=-cond.height/2){
+		
+		}else if(objs[i].prev_y>-cond.height/2.0 && objs[i].y<-cond.height/2.0){
+			objs[i].y = -cond.height-objs[i].y;
+			objs[i].prev_vy = -cond.cor*objs[i].vy;
+			objs[i].vy = -cond.cor*objs[i].vy;
+		
+		}else if(objs[i].prev_y>cond.height/2.0 && objs[i].y<cond.height/2.0){
+			objs[i].y = cond.height-objs[i].y;
+			objs[i].prev_vy = -cond.cor*objs[i].vy;
+			objs[i].vy = -cond.cor*objs[i].vy;
+		
+		}else if(objs[i].prev_y<=-cond.height/2.0 && objs[i].y>-cond.height/2.0){
 			objs[i].y = -cond.height-objs[i].y;
 			objs[i].prev_vy = -cond.cor*objs[i].vy;
 			objs[i].vy = -cond.cor*objs[i].vy;
 		}
 	}
+}
+
+void read_file(FILE* fp, Object objs[], const size_t numobj, const Condition cond){
+    int l = 200;
+    char s[l];
+    int count = 0;
+    //どこまでがコメントかを調べる。
+    while(1){
+        fgets(s,l,fp);
+        count++;
+        if(s[0]=='#'){
+            continue;
+        }else{
+            break;
+        }
+    }
+    
+    //ファイル先頭へ
+    rewind(fp);
+
+    for(int i=0 ; i<count-1 ; i++){
+        fgets(s,l,fp);
+    }
+    int check = 0;
+    for(int i=0 ; i<numobj ; i++){
+        double m,x,y,vx,vy;
+        int n = fscanf(fp, "%lf %lf %lf %lf %lf",&m, &x, &y, &vx, &vy);
+        fscanf(fp,"%*[^\n]%*c");
+        if(n!=5 || check == 1){
+            check = 1;
+            objs[i] = (Object){.m = 0.0, .x = cond.width, .y = cond.height, .vx = 0, .vy = 0};
+        }else{
+            objs[i] = (Object){ .m = m, .x = x, .y = y, .vx = vx, .vy = vy};
+        }
+    }
+
 }
